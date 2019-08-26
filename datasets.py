@@ -9,6 +9,7 @@ from glob import glob
 import utils.frame_utils as frame_utils
 
 from scipy.misc import imread, imresize
+import cv2
 
 class StaticRandomCrop(object):
     def __init__(self, image_size, crop_size):
@@ -363,6 +364,60 @@ class ImagesFromFolder(data.Dataset):
 
   def __len__(self):
     return self.size * self.replicates
+
+class FramesFromVideo(data.Dataset):
+    def __init__(self, args, is_cropped, root='/path/to/video', replicates=1):
+        self.args = args
+        self.is_cropped = is_cropped
+        self.crop_size = args.crop_size
+        self.render_size = args.inference_size
+        self.replicates = replicates
+
+        self.cap = cv2.VideoCapture(root)
+        if not self.cap.isOpened():
+            raise Exception('Could not open file: {}'.format(root))
+
+        self.size = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1
+
+        frame = self.cap.read()
+        if frame.shape[2] > 3:
+            frame = frame[:, :, :3]
+        self.frame_size = frame.shape
+
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+        if (self.render_size[0] < 0) or (self.render_size[1] < 0) or (self.frame_size[0] % 64) or (
+                self.frame_size[1] % 64):
+            self.render_size[0] = ((self.frame_size[0]) // 64) * 64
+            self.render_size[1] = ((self.frame_size[1]) // 64) * 64
+
+        args.inference_size = self.render_size
+
+    def __getitem__(self, index):
+        if index >= self.size:
+            self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+
+        ret1, img1 = self.cap.read()
+        ret2, img2 = self.cap.read()
+
+        if not (ret1 & ret2):
+            raise Exception('Could not read image at index {}'.format(index))
+
+        images = [img1, img2]
+        image_size = img1.shape[:2]
+        if self.is_cropped:
+            cropper = StaticRandomCrop(image_size, self.crop_size)
+        else:
+            cropper = StaticCenterCrop(image_size, self.render_size)
+        images = list(map(cropper, images))
+
+        images = np.array(images).transpose(3, 0, 1, 2)
+        images = torch.from_numpy(images.astype(np.float32))
+
+        return [images], [torch.zeros(images.size()[0:1] + (2,) + images.size()[-2:])]
+
+    def __len__(self):
+        return self.size * self.replicates
 
 '''
 import argparse
