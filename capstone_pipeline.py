@@ -66,19 +66,36 @@ def inference(data, target, model):
 def parse_args():
     parser = argparse.ArgumentParser()
 
+    # CUDA args
     parser.add_argument('--number_workers', '-nw', '--num_workers', type=int, default=8)
     parser.add_argument('--number_gpus', '-ng', type=int, default=-1, help='number of GPUs to use')
     parser.add_argument('--no_cuda', action='store_true')
 
+    # FlowNet args
     parser.add_argument('--seed', type=int, default=1)
+    parser.add_argument("--rgb_max", type=float, default=255.0)
+    parser.add_argument('--fp16', action='store_true', help='Run model in pseudo-fp16 mode (fp16 storage fp32 math).')
+    parser.add_argument('--fp16_scale', type=float, default=1024., help='Loss scaling, positive power of 2 values can improve fp16 convergence.')
+    parser.add_argument('--inference_size', type=int, nargs='+', default = [-1,-1], help='spatial size divisible by 64. default (-1,-1) - largest possible valid size would be used')
 
-    parser.add_argument('--weights', '-wt', type=str, help='path to latest checkpoint (default: none)', required=True)
-    parser.add_argument('--images', '-i', nargs=2, type=str, required=True)
-
+    # Model and loss args
     tools.add_arguments_for_module(parser, models, argument_for_class='model', default='FlowNet2')
     tools.add_arguments_for_module(parser, losses, argument_for_class='loss', default='L1Loss')
 
-    return parser.parse_args()
+    # Custom args
+    parser.add_argument('--weights', '-wt', type=str, help='path to latest checkpoint (default: none)', required=True)
+    parser.add_argument('--images', '-im', nargs=2, type=str, required=True)
+    
+    args = parser.parse_args()
+
+    args.model_class = tools.module_to_dict(models)[args.model]
+    args.loss_class = tools.module_to_dict(losses)[args.loss]
+    
+    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    if args.number_gpus < 0: 
+        args.number_gpus = torch.cuda.device_count()
+
+    return args
 
 
 def main():
@@ -128,3 +145,8 @@ def main():
         block.log(losses)
         cv2.imshow("Flow", output)
         cv2.waitKey()
+
+
+if __name__ == '__main__':
+    main()
+
