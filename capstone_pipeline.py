@@ -2,10 +2,12 @@ import os
 import argparse
 import numpy as np
 import cv2
+import colorama
 from scipy.misc import imread
 
 import torch
 import torch.nn as nn
+from torch.autograd import Variable
 
 import models
 import losses
@@ -49,14 +51,17 @@ def preprocess(args):
 
     target = torch.zeros(images.size()[0:1] + (2,) + images.size()[-2:])
 
-    return images, target
+    return [images], [target]
 
 
 def inference(data, target, model):
     model.eval()
 
+    data = [Variable(d) for d in data]
+    target = [Variable(t) for t in target]
+
     with torch.no_grad():
-        losses, output = model(data, target)
+        losses, output = model(data[0], target[0])
 
     losses = [torch.mean(loss_value) for loss_value in losses]
 
@@ -85,15 +90,25 @@ def parse_args():
     # Custom args
     parser.add_argument('--weights', '-wt', type=str, help='path to latest checkpoint (default: none)', required=True)
     parser.add_argument('--images', '-im', nargs=2, type=str, required=True)
-    
-    args = parser.parse_args()
 
-    args.model_class = tools.module_to_dict(models)[args.model]
-    args.loss_class = tools.module_to_dict(losses)[args.loss]
-    
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
-    if args.number_gpus < 0: 
-        args.number_gpus = torch.cuda.device_count()
+    with tools.TimerBlock("Parsing Arguments") as block:
+        args = parser.parse_args()
+        if args.number_gpus < 0:
+            args.number_gpus = torch.cuda.device_count()
+
+        parser.add_argument('--IGNORE', action='store_true')
+        defaults = vars(parser.parse_args(['--IGNORE']))
+
+        # Print all arguments, color the non-defaults
+        for argument, value in sorted(vars(args).items()):
+            reset = colorama.Style.RESET_ALL
+            color = reset if value == defaults[argument] else colorama.Fore.MAGENTA
+            block.log('{}{}: {}{}'.format(color, argument, value, reset))
+
+        args.model_class = tools.module_to_dict(models)[args.model]
+        args.loss_class = tools.module_to_dict(losses)[args.loss]
+
+        args.cuda = not args.no_cuda and torch.cuda.is_available()
 
     return args
 
