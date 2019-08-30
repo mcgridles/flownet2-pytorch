@@ -2,6 +2,7 @@ import os
 import argparse
 import numpy as np
 import colorama
+import cv2
 from imageio import imread
 
 import torch
@@ -94,6 +95,30 @@ def inference(data, target, model):
     loss = [torch.mean(loss_value) for loss_value in loss]
 
     return loss, output
+
+
+def display_flow(uv, save_path=''):
+    """
+    Displays optical flow using HSV color space.
+    """
+
+    assert(uv.ndim == 3)
+    assert(uv.size[2] == 2)
+
+    u = uv[:, :, 0]
+    v = uv[:, :, 1]
+
+    hue = np.arctan2(v, u)  # 0-360
+    saturation = np.linalg.norm(uv, axis=2)  # 0-1
+    value = np.ones_like(hue)  # 1
+    hsv = np.dstack((hue, saturation, value))
+
+    bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+    if save_path:
+        cv2.imwrite(save_path, bgr)
+    else:
+        cv2.imshow('Flow', bgr)
+        cv2.waitKey()
 
 
 def parse_args():
@@ -199,12 +224,13 @@ def main():
         block.log('Inference')
         loss, output = inference(data=images, target=target, model=model_and_loss)
 
-        output = output.cpu()       # convert to CPU tensor
-        output = output.squeeze(0)  # remove batch dimension
-        output = output.numpy()     # convert to numpy array
+        output = output.cpu()                       # convert to CPU tensor
+        output = output.squeeze(0)                  # remove batch dimension
+        output = output.numpy().transpose(1, 2, 0)  # convert to numpy array (h, w, c)
         
         block.log(loss)
         block.log(output.shape)
+        display_flow(output, save_path=os.path.dirname(os.path.abspath(__file__)))
 
 
 if __name__ == '__main__':
