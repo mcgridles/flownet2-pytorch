@@ -108,10 +108,12 @@ def display_flow(uv, save_path=''):
     u = uv[:, :, 0]
     v = uv[:, :, 1]
 
-    hue = np.arctan2(v, u)  # 0-360
-    saturation = np.linalg.norm(uv, axis=2)  # 0-1
-    value = np.ones_like(hue)  # 1
-    hsv = np.dstack((hue, saturation, value))
+    hue = (np.arctan2(v, u) + 2 * np.pi) % (2 * np.pi)  # Angles [0, 2*pi]]
+    hue = np.interp(hue, [0, 2*np.pi], [0, 179])        # Convert to [0, 179]
+    saturation = np.linalg.norm(uv, axis=2) * 255       # Magnitudes [0, 255]
+    value = np.ones_like(hue) * 255
+
+    hsv = np.dstack((hue, saturation, value)).astype(int)
 
     bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     if save_path:
