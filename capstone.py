@@ -124,9 +124,9 @@ class OpticalFlow:
         frame_size = frame_utils.read_gen(images[0]).shape
 
         render_size = self.args.inference_size
-        if (self.render_size[0] < 0) or (self.render_size[1] < 0) or (frame_size[0] % 64) or (frame_size[1] % 64):
-            self.render_size[0] = ((frame_size[0]) // 64) * 64
-            self.render_size[1] = ((frame_size[1]) // 64) * 64
+        if (render_size[0] < 0) or (render_size[1] < 0) or (frame_size[0] % 64) or (frame_size[1] % 64):
+            render_size[0] = ((frame_size[0]) // 64) * 64
+            render_size[1] = ((frame_size[1]) // 64) * 64
 
         img1 = imread(images[0])
         img2 = imread(images[1])
@@ -247,8 +247,8 @@ def parse_args():
 def main():
     """
     Command for running on capstone4790-vm-1 (IP: 35.197.106.62):
-    >>> python capstone_pipeline.py --weights /mnt/disks/datastorage/weights/FlowNet2_checkpoint.pth.tar \
-                                    --images /mnt/disks/datastorage/MPI-Sintel/training/final/alley_1/frame_0001.png \
+    >>> python capstone.py --weights /mnt/disks/datastorage/weights/FlowNet2_checkpoint.pth.tar \
+                           --images /mnt/disks/datastorage/MPI-Sintel/training/final/alley_1/frame_0001.png \
                                     /mnt/disks/datastorage/MPI-Sintel/training/final/alley_1/frame_0002.png
     """
 
