@@ -226,7 +226,7 @@ def parse_args():
     parser.add_argument('--images', '-im', nargs=2, type=str)
 
     with tools.TimerBlock('Parsing Arguments') as block:
-        args = parser.parse_args()
+        args, unknown = parser.parse_known_args()
         if args.number_gpus < 0:
             args.number_gpus = torch.cuda.device_count()
 
