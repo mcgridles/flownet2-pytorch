@@ -46,7 +46,7 @@ class StaticCenterCrop(object):
 
 class OpticalFlow:
     """
-    FlowNet2 optical flow inference class
+    FlowNet2 optical flow inference interface.
     """
 
     def __init__(self, args):
@@ -254,7 +254,7 @@ def main():
 
     args = parse_args()
     of = OpticalFlow(args)
-    of.run(args.images)
+    output = of.run(args.images)
     of.display_flow(output, save_path=os.path.dirname(os.path.abspath(__file__)))
 
 
