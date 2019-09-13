@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import colorama
 import cv2
+import matplotlib.pyplot as plt
 from imageio import imread
 
 import torch
@@ -175,7 +176,7 @@ class OpticalFlow:
         """
 
         assert(uv.ndim == 3)
-        assert(uv.size[2] == 2)
+        assert(uv.shape[2] == 2)
 
         u = uv[:, :, 0]
         v = uv[:, :, 1]
@@ -185,14 +186,15 @@ class OpticalFlow:
         saturation = np.linalg.norm(uv, axis=2) * 255       # Magnitudes [0, 255]
         value = np.ones_like(hue) * 255
 
-        hsv = np.dstack((hue, saturation, value)).astype(int)
+        hsv = np.dstack((hue, saturation, value)).astype(np.uint8)
 
-        bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
         if save_path:
-            cv2.imwrite(save_path, bgr)
+            bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+            cv2.imwrite(os.path.join(save_path, 'flow.jpg'), bgr)
         else:
-            cv2.imshow('Flow', bgr)
-            cv2.waitKey()
+            rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
+            plt.imshow(rgb)
+            plt.show()
 
 
 def parse_args():
@@ -203,7 +205,6 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     # CUDA args
-    parser.add_argument('--number_workers', '-nw', '--num_workers', type=int, default=8)
     parser.add_argument('--number_gpus', '-ng', type=int, default=-1, help='number of GPUs to use')
     parser.add_argument('--no_cuda', action='store_true')
 
