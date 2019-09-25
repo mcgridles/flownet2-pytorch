@@ -6,3 +6,4 @@ work
 work/*
 _ext/
 .idea/*
+.ipynb_checkpoints/*
