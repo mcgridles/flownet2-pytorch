@@ -54,9 +54,9 @@ class OpticalFlow:
         self.args = args
         self.model = None
 
-        self.setup()
+        self.load()
 
-    def setup(self):
+    def load(self):
         """
         Set up FlowNet2 inference model.
         """
@@ -86,13 +86,13 @@ class OpticalFlow:
                 block.log('CUDA not being used')
                 torch.manual_seed(self.args.seed)
 
-            if os.path.isfile(self.args.weights):
-                block.log('Loading checkpoint {}'.format(self.args.weights))
-                checkpoint = torch.load(self.args.weights)
+            if os.path.isfile(self.args.optical_weights):
+                block.log('Loading weights {}'.format(self.args.optical_weights))
+                checkpoint = torch.load(self.args.optical_weights)
                 model_and_loss.module.model.load_state_dict(checkpoint['state_dict'])
-                block.log('Loaded checkpoint {} (at epoch {})'.format(self.args.weights, checkpoint['epoch']))
+                block.log('Loaded checkpoint {} (at epoch {})'.format(self.args.optical_weights, checkpoint['epoch']))
             else:
-                block.log('No checkpoint found at {}'.format(self.args.weights))
+                block.log('No checkpoint found at {}'.format(self.args.optical_weights))
                 quit()
 
             self.model = model_and_loss
@@ -222,7 +222,7 @@ def parse_args():
     tools.add_arguments_for_module(parser, losses, argument_for_class='loss', default='L1Loss')
 
     # Custom args
-    parser.add_argument('--weights', '-wt', type=str, help='path to latest checkpoint (default: none)')
+    parser.add_argument('--optical_weights', '-wt', type=str, help='path to latest checkpoint (default: none)')
     parser.add_argument('--images', '-im', nargs=2, type=str)
 
     with tools.TimerBlock('Parsing Arguments') as block:
