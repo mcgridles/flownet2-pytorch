@@ -61,8 +61,11 @@ class OpticalFlow:
         --fp16 (bool) -> Run model in pseudo-fp16 mode (fp16 storage fp32 math)
         --fp16_scale (float) -> Loss scaling, positive power of 2 values can improve fp16 convergence, default=1024.0
         --inference_size (int) -> Spatial size divisible by 64, default (-1,-1) - largest possible valid size would be used
-        --model (str) -> Model type, default='FlowNet2'
-        --loss (str) -> Loss type, default='L1Loss'
+        --model (str) -> Model type, default='FlowNet2', options: ChannelNorm, FlowNet2, FlowNet2C, FlowNet2CS,
+                         FlowNet2CSS, FlowNet2S, FlowNet2SD, Resample2d, tofp16, tofp32
+        --model_div_flow (float) -> Flow division
+        --model_batchNorm (bool) -> Perform batch normalization if true
+        --loss (str) -> Loss type, default='L1Loss', options: L1, L1Loss, L2, L2Loss, MultiScale
         --optical_weights (str) -> Path to latest weights file
         --images (str) -> Path to two input images
 
