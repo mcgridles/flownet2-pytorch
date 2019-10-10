@@ -54,8 +54,7 @@ class OpticalFlow:
 
     Arguments
         --number_gpus (int) -> Number of GPUs to use, default=-1
-        --no_cuda (bool) -> Don't use CUDA if true
-        --seed (int) -> Random seed, default=1
+        --seed (int) -> RNG seed, default=1
         --rgb_max (float) -> Max RGB value, default=255.0
         --fp16 (bool) -> Run model in pseudo-fp16 mode (fp16 storage fp32 math)
         --fp16_scale (float) -> Loss scaling, positive power of 2 values can improve fp16 convergence, default=1024.0
@@ -93,14 +92,14 @@ class OpticalFlow:
                 sum([p.data.nelement() if p.requires_grad else 0 for p in model_and_loss.parameters()])))
 
             # Passing to cuda or wrap with data parallel, model and loss
-            if self.args.cuda and (self.args.number_gpus > 0) and self.args.fp16:
+            if (self.args.number_gpus > 0) and self.args.fp16:
                 block.log('Parallelizing')
                 model_and_loss = nn.parallel.DataParallel(model_and_loss, device_ids=list(range(self.args.number_gpus)))
 
                 block.log('Initializing CUDA')
                 model_and_loss = model_and_loss.cuda().half()
                 torch.cuda.manual_seed(self.args.seed)
-            elif self.args.cuda and self.args.number_gpus > 0:
+            elif self.args.number_gpus > 0:
                 block.log('Initializing CUDA')
                 model_and_loss = model_and_loss.cuda()
 
