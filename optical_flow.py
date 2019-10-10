@@ -4,7 +4,6 @@ import numpy as np
 import colorama
 import cv2
 import matplotlib.pyplot as plt
-from imageio import imread
 
 import torch
 import torch.nn as nn
@@ -143,9 +142,9 @@ class OpticalFlow:
             loss, output = self.inference(images)
             block.log(loss)
 
-            output = output.cpu()                       # convert to CPU tensor
-            output = output.squeeze(0)                  # remove batch dimension
-            output = output.numpy().transpose(1, 2, 0)  # convert to numpy array (h, w, c)
+            output = output.cpu()      # convert to CPU tensor
+            output = output.squeeze(0) # remove batch dimension
+            output = output.numpy()    # convert to numpy array
             
             return output
 
@@ -154,15 +153,15 @@ class OpticalFlow:
         Prepare images for inference and convert to torch tensors.
         """
 
-        frame_size = frame_utils.read_gen(images[0]).shape
+        frame_size = images[0].shape
 
         render_size = self.args.inference_size
         if (render_size[0] < 0) or (render_size[1] < 0) or (frame_size[0] % 64) or (frame_size[1] % 64):
             render_size[0] = ((frame_size[0]) // 64) * 64
             render_size[1] = ((frame_size[1]) // 64) * 64
 
-        img1 = imread(images[0])
-        img2 = imread(images[1])
+        img1 = images[0]
+        img2 = images[1]
         images = [img1, img2]
         image_size = img1.shape[:2]
 
