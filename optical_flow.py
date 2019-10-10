@@ -115,7 +115,7 @@ class OpticalFlow:
             if os.path.isfile(self.args.optical_weights):
                 block.log('Loading weights {}'.format(self.args.optical_weights))
                 checkpoint = torch.load(self.args.optical_weights)
-                model_and_loss.module.model.load_state_dict(checkpoint['state_dict'])
+                model_and_loss.model.load_state_dict(checkpoint['state_dict'])
                 block.log('Loaded checkpoint {} (at epoch {})'.format(self.args.optical_weights, checkpoint['epoch']))
             else:
                 block.log('No checkpoint found at {}'.format(self.args.optical_weights))
