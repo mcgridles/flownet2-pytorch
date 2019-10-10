@@ -133,20 +133,14 @@ class OpticalFlow:
         Run optical flow pipeline on two images.
         """
 
-        with tools.TimerBlock('Performing inference') as block:
-            block.log('Preprocessing')
-            images = self.preprocess(images)
+        images = self.preprocess(images)
+        loss, output = self.inference(images)
 
-            block.log('Inference Input: {}'.format(' '.join([str([d for d in x.size()]) for x in images])))
-
-            loss, output = self.inference(images)
-            block.log(loss)
-
-            output = output.cpu()      # convert to CPU tensor
-            output = output.squeeze(0) # remove batch dimension
-            output = output.numpy()    # convert to numpy array
-            
-            return output
+        output = output.cpu()      # convert to CPU tensor
+        output = output.squeeze(0) # remove batch dimension
+        output = output.numpy()    # convert to numpy array
+        
+        return output
 
     def preprocess(self, images):
         """
