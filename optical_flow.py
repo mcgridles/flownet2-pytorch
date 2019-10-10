@@ -118,7 +118,7 @@ class OpticalFlow:
 
                 # CUDA weights must be loaded slightly differently
                 if next(model_and_loss.parameters()).is_cuda:
-                    model_and_loss.modules.model.load_state_dict(checkpoint['state_dict'])
+                    model_and_loss.module.model.load_state_dict(checkpoint['state_dict'])
                 else:
                     model_and_loss.model.load_state_dict(checkpoint['state_dict'])
 
