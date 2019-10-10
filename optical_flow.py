@@ -12,7 +12,7 @@ from torch.autograd import Variable
 
 import models
 import losses
-from utils import frame_utils, tools
+from flow_utils import frame_utils, tools
 
 
 class ModelAndLoss(nn.Module):
