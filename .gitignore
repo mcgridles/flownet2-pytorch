@@ -7,3 +7,6 @@ work/*
 _ext/
 .idea/*
 .ipynb_checkpoints/*
+build/
+dist/
+*.egg-info/
