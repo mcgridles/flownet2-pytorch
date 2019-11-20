@@ -27,12 +27,10 @@ class ModelAndLoss(nn.Module):
         kwargs = tools.kwargs_from_args(args, 'loss')
         self.loss = args.loss_class(args, **kwargs)
 
-    def forward(self, data, target):
+    def forward(self, data):
         output = self.model(data)
 
-        loss_values = self.loss(output, target)
-
-        return loss_values, output
+        return output
 
 
 class StaticCenterCrop(object):
@@ -127,6 +125,7 @@ class OpticalFlow:
                 quit()
 
             self.model = model_and_loss
+            self.model.eval()
 
     def run(self, images):
         """
@@ -134,7 +133,7 @@ class OpticalFlow:
         """
 
         images = self.preprocess(images)
-        loss, output = self.inference(images)
+        output = self.inference(images)
 
         output = output.cpu()      # convert to CPU tensor
         output = output.squeeze(0) # remove batch dimension
@@ -173,26 +172,16 @@ class OpticalFlow:
         Perform inference (calculate optical flow) for two images.
         """
 
-        self.model.eval()
-
-        # When ground-truth flows are not available for inference_dataset, the targets are set to all zeros.
-        # Thus, losses are actually L1 or L2 norms of compute optical flows, depending on the type of loss norm passed in
-        # Size is (2, height, width)
-        target = [torch.zeros((2,) + images[0].size()[-2:])]
-
         # Expand dimension for batch size
         for i in range(len(images)):
             images[i] = images[i].unsqueeze(0)
-            target[i] = target[i].unsqueeze(0)
 
         images = [Variable(i) for i in images]
-        target = [Variable(t) for t in target]
 
         with torch.no_grad():
-            loss, output = self.model(images[0], target[0])
-        loss = [torch.mean(loss_value) for loss_value in loss]
+            output = self.model(images[0])
 
-        return loss, output
+        return output
 
     @staticmethod
     def display_flow(uv, save_path=''):
