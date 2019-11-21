@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import colorama
 import cv2
+import time
 import matplotlib.pyplot as plt
 
 import torch
@@ -153,11 +154,7 @@ class OpticalFlow:
             render_size[0] = ((frame_size[0]) // 64) * 64
             render_size[1] = ((frame_size[1]) // 64) * 64
 
-        img1 = images[0]
-        img2 = images[1]
-        images = [img1, img2]
-        image_size = img1.shape[:2]
-
+        image_size = frame_size[:2]
         cropper = StaticCenterCrop(image_size, render_size)
         images = list(map(cropper, images))
 
@@ -165,21 +162,19 @@ class OpticalFlow:
         images = np.array(images).transpose(3, 0, 1, 2)
         images = torch.from_numpy(images.astype(np.float32))
 
-        return [images]
+        return images
 
     def inference(self, images):
         """
         Perform inference (calculate optical flow) for two images.
         """
-
-        # Expand dimension for batch size
-        for i in range(len(images)):
-            images[i] = images[i].unsqueeze(0)
-
-        images = [Variable(i) for i in images]
-
+    
+        images = images.unsqueeze(0)
+        if self.args.cuda and self.args.number_gpus > 0:
+            images.cuda()
+            
         with torch.no_grad():
-            output = self.model(images[0])
+            output = self.model(images)
 
         return output
 
