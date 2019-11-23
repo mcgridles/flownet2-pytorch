@@ -204,3 +204,51 @@ class OpticalFlow:
             rgb = cv2.cvtColor(hsv, cv2.COLOR_HSV2RGB)
             plt.imshow(rgb)
             plt.show()
+            
+            
+def parse_args(model):
+    """
+    Create argument parser for optical flow class (inference only).
+
+    :return: (argparse.ArgumentParser) -> Parser with arguments for optical flow
+    """
+
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # CUDA
+    parser.add_argument('--number_gpus', type=int, default=-1, help='Number of GPUs to use')
+
+    # Preprocessing
+    parser.add_argument('--seed', type=int, default=1, help='RNG seed')
+    parser.add_argument('--rgb_max', type=float, default=255.0, help='Max RGB value')
+    parser.add_argument('--fp16', action='store_true', help='Run model in pseudo-fp16 mode (fp16 storage fp32 math).')
+    parser.add_argument('--fp16_scale', type=float, default=1024.0,
+        help='Loss scaling, positive power of 2 values can improve fp16 convergence.')
+    parser.add_argument('--inference_size', type=int, nargs='+', default=[-1, -1],
+        help='Spatial size divisible by 64. default (-1,-1) - largest possible valid size would be used')
+
+    # Weights
+    parser.add_argument('--optical_weights', type=str, help='Path to FlowNet weights', default='')
+
+    ### Model and loss ###
+    tools.add_arguments_for_module(parser, models, argument_for_class='model', default=model)
+    tools.add_arguments_for_module(parser, losses, argument_for_class='loss', default='L1Loss')
+
+    with tools.TimerBlock('Parsing Arguments') as block:
+        args, unknown = parser.parse_known_args()
+        if args.number_gpus < 0:
+            args.number_gpus = torch.cuda.device_count()
+
+        # Print all arguments, color the non-defaults
+        parser.add_argument('--IGNORE', action='store_true')
+        defaults = vars(parser.parse_args(['--IGNORE']))
+        for argument, value in sorted(vars(args).items()):
+            reset = colorama.Style.RESET_ALL
+            color = reset if value == defaults[argument] else colorama.Fore.MAGENTA
+            block.log('{}{}: {}{}'.format(color, argument, value, reset))
+
+        args.model_class = tools.module_to_dict(models)[args.model]
+        args.loss_class = tools.module_to_dict(losses)[args.loss]
+        args.cuda = torch.cuda.is_available()
+
+    return args
