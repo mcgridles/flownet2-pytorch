@@ -128,7 +128,7 @@ class OpticalFlow:
             self.model = model_and_loss
             self.model.eval()
 
-    def run(self, images):
+    def __call__(self, images):
         """
         Run optical flow pipeline on two images.
         """
